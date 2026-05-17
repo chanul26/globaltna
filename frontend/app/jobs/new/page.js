@@ -8,7 +8,7 @@ import api from '../../../lib/api';
 export default function NewJob() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    title: '', description: '', category: 'Plumbing', location: '', contactName: '', contactEmail: ''
+    title: '', description: '', category: '', location: '', contactName: '', contactEmail: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,17 +17,26 @@ export default function NewJob() {
     e.preventDefault();
     setError('');
 
-    // Client-side email validation
+    // Strict Client-side validation (Handles everything so the browser doesn't have to)
+    if (!formData.title || formData.title.trim().length < 4) {
+      return setError('Please enter a valid title (at least 4 characters).');
+    }
+    if (!formData.description || formData.description.trim().length < 10) {
+      return setError('Please enter a clearer description (at least 10 characters).');
+    }
+    if (!formData.category) {
+      return setError('Please select a category from the dropdown.');
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.contactEmail && !emailRegex.test(formData.contactEmail)) {
-      setError('Please enter a valid email address.');
-      return;
+      return setError('Please enter a valid email address.');
     }
 
     setLoading(true);
     try {
       await api.post('/api/jobs', formData);
-      router.push('/'); // Redirect to home on success
+      router.push('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create job request.');
     } finally {
@@ -43,26 +52,27 @@ export default function NewJob() {
           <Link href="/" className="text-gray-500 hover:text-gray-700">Cancel</Link>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
+        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md font-medium">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-            <input required type="text" className="w-full border border-gray-300 rounded-md p-2"
+            <input type="text" className="w-full border border-gray-300 rounded-md p-2"
               value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <textarea required rows="4" className="w-full border border-gray-300 rounded-md p-2"
+            <textarea rows="4" className="w-full border border-gray-300 rounded-md p-2"
               value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select className="w-full border border-gray-300 rounded-md p-2"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+              <select className="w-full border border-gray-300 rounded-md p-2 bg-white"
                 value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                <option value="" disabled>Select a category</option>
                 <option value="Plumbing">Plumbing</option>
                 <option value="Electrical">Electrical</option>
                 <option value="Painting">Painting</option>
@@ -84,12 +94,12 @@ export default function NewJob() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
-              <input type="email" className="w-full border border-gray-300 rounded-md p-2"
+              <input type="text" className="w-full border border-gray-300 rounded-md p-2"
                 value={formData.contactEmail} onChange={e => setFormData({...formData, contactEmail: e.target.value})} />
             </div>
           </div>
 
-          <button disabled={loading} type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition mt-6">
+          <button disabled={loading} type="submit" className="w-full bg-blue-600 text-white font-medium py-2 rounded-md hover:bg-blue-700 transition mt-6 disabled:bg-blue-300">
             {loading ? 'Submitting...' : 'Submit Request'}
           </button>
         </form>
